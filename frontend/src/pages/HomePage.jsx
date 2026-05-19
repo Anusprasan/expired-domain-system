@@ -1,8 +1,17 @@
 import { Link } from "react-router-dom";
+import { getSessionUser } from "../utils/session";
 
 function HomePage() {
+  const user = getSessionUser();
+
   return (
     <div style={styles.page}>
+      {user && (
+        <div style={styles.userBar}>
+          Logged in as <strong>{user.name}</strong>
+        </div>
+      )}
+
       <section style={styles.hero}>
         <div style={styles.badge}>⭐ Smart Domain Management</div>
 
@@ -81,6 +90,14 @@ const styles = {
     minHeight: "100vh",
     background: "linear-gradient(180deg, #faf7ff, #ffffff)",
     color: "#111827",
+  },
+  userBar: {
+    padding: "12px 50px",
+    background: "#111827",
+    color: "white",
+    fontSize: "15px",
+    fontWeight: "500",
+    textAlign: "right",
   },
   hero: {
     textAlign: "center",
