@@ -1,0 +1,513 @@
+.app-content.is-screenshot-taker-smooth-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screenshot-taker-page .management-modal-backdrop {
+  padding: clamp(10px, 3vw, 26px);
+}
+
+.screenshot-taker-page .management-modal-backdrop.is-centered .screenshot-taker-schedule-modal,
+.screenshot-taker-page .management-modal-backdrop.is-centered .screenshot-taker-output-modal,
+.screenshot-taker-page .management-modal-backdrop.is-centered .screenshot-taker-clear-modal {
+  transform: none;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-modal,
+.screenshot-taker-page .screenshot-taker-output-modal,
+.screenshot-taker-page .screenshot-taker-clear-modal {
+  box-sizing: border-box;
+  padding: clamp(18px, 2.4vw, 26px);
+  border-radius: 22px;
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.26);
+}
+
+.screenshot-taker-page .screenshot-taker-modal-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.screenshot-taker-page .screenshot-taker-modal-header h2 {
+  margin: 8px 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.screenshot-taker-page .screenshot-taker-modal-header p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.screenshot-taker-page .screenshot-taker-modal-header .management-inline-actions {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.68fr) minmax(0, 1.32fr);
+  gap: 18px;
+  align-items: center;
+  padding: 18px 20px;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-panel h2 {
+  margin: 8px 0 4px;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-panel p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-meter {
+  display: grid;
+  gap: 10px;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-meter-header,
+.screenshot-taker-page .screenshot-taker-storage-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-meter-header strong {
+  overflow-wrap: anywhere;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-meter-header span,
+.screenshot-taker-page .screenshot-taker-storage-stats span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.screenshot-taker-page .screenshot-taker-storage-track span {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #16a34a, #2563eb);
+  transition: width 0.2s ease;
+}
+
+.screenshot-taker-page .screenshot-taker-storage-panel.is-over-limit .screenshot-taker-storage-track span {
+  background: linear-gradient(90deg, #f97316, #dc2626);
+}
+
+.screenshot-taker-page .screenshot-taker-storage-panel .management-button-secondary {
+  justify-self: end;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+  gap: 18px;
+  align-items: end;
+  padding: 18px 20px;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-panel h2 {
+  margin: 8px 0 4px;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-panel p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.screenshot-taker-page .screenshot-taker-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.3fr) minmax(130px, 0.48fr) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-controls .management-field {
+  gap: 6px;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-controls .management-field > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.screenshot-taker-page .screenshot-taker-search-field input {
+  min-width: 0;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding-bottom: 3px;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-stats span {
+  padding: 6px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.screenshot-taker-page .screenshot-taker-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.screenshot-taker-page .screenshot-taker-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 295px));
+  justify-content: start;
+  align-items: stretch;
+}
+
+.screenshot-taker-page .screenshot-taker-card {
+  width: 100%;
+  min-height: 350px;
+  grid-template-rows: 240px 1fr;
+  content-visibility: auto;
+  contain-intrinsic-size: 350px;
+}
+
+.screenshot-taker-page .screenshot-taker-card-body {
+  min-width: 0;
+  align-content: start;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-modal {
+  width: min(720px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-simple {
+  display: grid;
+  gap: 16px;
+}
+
+.screenshot-taker-page .screenshot-taker-delay-field {
+  display: grid;
+  gap: 8px;
+}
+
+.screenshot-taker-page .screenshot-taker-delay-field span {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.screenshot-taker-page .screenshot-taker-delay-field input {
+  width: 100%;
+  min-height: 46px;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-config {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-panel) 86%, transparent);
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-toggle {
+  align-items: flex-start;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-toggle small {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 10px;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-fields .management-field {
+  gap: 7px;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-fields .management-field > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-fields input {
+  min-height: 42px;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.screenshot-taker-page .screenshot-taker-telegram-status .management-error {
+  width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-inline-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-inline-status div {
+  min-width: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-inline-status span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-inline-status strong,
+.screenshot-taker-page .screenshot-taker-schedule-inline-status small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-inline-status small {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-actions .management-button,
+.screenshot-taker-page .screenshot-taker-schedule-actions .management-button-secondary {
+  min-height: 42px;
+}
+
+.screenshot-taker-page .screenshot-taker-schedule-error {
+  margin: 14px 0 0;
+  padding: 11px 12px;
+  border-radius: 12px;
+}
+
+.screenshot-taker-page .screenshot-taker-output-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: hidden;
+}
+
+.screenshot-taker-page .screenshot-taker-clear-modal {
+  width: min(520px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screenshot-taker-page .screenshot-taker-clear-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.screenshot-taker-page .screenshot-taker-output-frame {
+  flex: 1 1 auto;
+  height: clamp(320px, 66dvh, 760px);
+  min-height: 260px;
+  padding: clamp(10px, 1.6vw, 18px);
+  border-radius: 20px;
+  overflow: auto;
+  align-items: flex-start;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.06), rgba(37, 99, 235, 0.1)),
+    repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.08) 0 8px, transparent 8px 16px),
+    var(--surface-panel);
+}
+
+.screenshot-taker-page .screenshot-taker-output-frame img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-width: 0;
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+}
+
+.screenshot-taker-page .screenshot-taker-output-details {
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.screenshot-taker-page .screenshot-taker-output-details span {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-panel);
+  overflow-wrap: anywhere;
+}
+
+.screenshot-taker-page .screenshot-taker-preview-empty {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 16px;
+}
+
+.screenshot-taker-page .screenshot-taker-preview-loading .money-sites-screenshot-loader {
+  width: 34px;
+  height: 34px;
+}
+
+.screenshot-taker-page .screenshot-taker-preview-loading.is-error strong {
+  color: #b91c1c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-content.is-screenshot-taker-smooth-scroll,
+  .screenshot-taker-page .screenshot-taker-schedule-modal,
+  .screenshot-taker-page .screenshot-taker-clear-modal,
+  .screenshot-taker-page .screenshot-taker-output-frame {
+    scroll-behavior: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .screenshot-taker-page .screenshot-taker-schedule-modal,
+  .screenshot-taker-page .screenshot-taker-output-modal,
+  .screenshot-taker-page .screenshot-taker-clear-modal {
+    width: calc(100vw - 18px);
+    max-height: calc(100dvh - 18px);
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .screenshot-taker-page .screenshot-taker-modal-header,
+  .screenshot-taker-page .screenshot-taker-storage-panel,
+  .screenshot-taker-page .screenshot-taker-filter-panel,
+  .screenshot-taker-page .screenshot-taker-filter-controls,
+  .screenshot-taker-page .screenshot-taker-telegram-fields,
+  .screenshot-taker-page .screenshot-taker-schedule-inline-status {
+    grid-template-columns: 1fr;
+  }
+
+  .screenshot-taker-page .screenshot-taker-modal-header .management-inline-actions,
+  .screenshot-taker-page .screenshot-taker-storage-panel .management-button-secondary,
+  .screenshot-taker-page .screenshot-taker-filter-actions,
+  .screenshot-taker-page .screenshot-taker-schedule-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .screenshot-taker-page .screenshot-taker-modal-header .management-button-secondary,
+  .screenshot-taker-page .screenshot-taker-storage-panel .management-button-secondary,
+  .screenshot-taker-page .screenshot-taker-filter-actions .management-button-secondary,
+  .screenshot-taker-page .screenshot-taker-schedule-actions .management-button,
+  .screenshot-taker-page .screenshot-taker-schedule-actions .management-button-secondary {
+    flex: 1 1 140px;
+  }
+
+  .screenshot-taker-page .screenshot-taker-output-frame {
+    height: 58dvh;
+    min-height: 240px;
+  }
+
+  .screenshot-taker-page .screenshot-taker-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .screenshot-taker-page .screenshot-taker-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .screenshot-taker-page .management-modal-backdrop {
+    padding: 8px;
+  }
+
+  .screenshot-taker-page .screenshot-taker-schedule-modal,
+  .screenshot-taker-page .screenshot-taker-output-modal,
+  .screenshot-taker-page .screenshot-taker-clear-modal {
+    width: calc(100vw - 10px);
+    max-height: calc(100dvh - 10px);
+    padding: 14px;
+  }
+
+  .screenshot-taker-page .screenshot-taker-modal-header .management-button-secondary,
+  .screenshot-taker-page .screenshot-taker-schedule-actions .management-button,
+  .screenshot-taker-page .screenshot-taker-schedule-actions .management-button-secondary {
+    flex-basis: 100%;
+  }
+
+  .screenshot-taker-page .screenshot-taker-output-frame {
+    height: 54dvh;
+    padding: 8px;
+  }
+
+  .screenshot-taker-page .screenshot-taker-output-details span {
+    width: 100%;
+    border-radius: 14px;
+  }
+
+  .screenshot-taker-page .screenshot-taker-storage-panel,
+  .screenshot-taker-page .screenshot-taker-filter-panel {
+    padding: 16px;
+  }
+}

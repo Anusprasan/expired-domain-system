@@ -1,0 +1,6 @@
+{
+  "ignore": [
+    "database-backups/**",
+    "activity-log-backups/**"
+  ]
+}

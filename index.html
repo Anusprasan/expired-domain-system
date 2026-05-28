@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="http://localhost:4000/api/site-analytics/tracker.js"></script>
+    <title>Document</title>
+</head>
+<body>
+<h1>Hello World</h1>
+<script async custom-element="amp-analytics" src="https://cdn.ampproject.org/v0/amp-analytics-0.1.js"></script>
+<amp-analytics>
+<script type="application/json">
+{
+  "requests": {
+    "pageview": "http://localhost:4000/api/site-analytics/pixel.gif?event=pageview&source=amp&mainUrl=${canonicalUrl}&pageTitle=${title}&referrer=${documentReferrer}&deviceId=${clientId(m200-site-analytics)}",
+    "click": "http://localhost:4000/api/site-analytics/pixel.gif?event=click&source=amp&mainUrl=${canonicalUrl}&pageTitle=${title}&referrer=${documentReferrer}&deviceId=${clientId(m200-site-analytics)}"
+  },
+  "triggers": {
+    "trackPageview": {
+      "on": "visible",
+      "request": "pageview"
+    },
+    "trackLinkClicks": {
+      "on": "click",
+      "selector": "a",
+      "request": "click"
+    }
+  },
+  "transport": {
+    "beacon": false,
+    "xhrpost": false,
+    "image": true
+  }
+}
+</script>
+</amp-analytics>
+<a href="https://www.google.com">Google</a>
+<a href="https://www.facebook.com">Facebook</a>
+
+</body>
+</html>

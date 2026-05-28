@@ -1,0 +1,15 @@
+name: Deploy - Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  build-deploy:
+    uses: ./.github/workflows/reusable-build-deploy-env.yml
+    with:
+      environment: staging
+      base_sha: ${{ github.event.before }}
+      head_sha: ${{ github.sha }}
+    secrets: inherit

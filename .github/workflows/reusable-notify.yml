@@ -1,0 +1,80 @@
+name: Reusable Notify
+
+on:
+  workflow_call:
+    inputs:
+      status:
+        description: "start | success | failed | skipped"
+        required: true
+        type: string
+      environment:
+        description: "dev | qa | staging | prod"
+        required: true
+        type: string
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Send pipeline started
+        if: inputs.status == 'start'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            Pipeline Started
+
+            Repository:  ${{ github.repository }}
+            Branch:      ${{ github.ref_name }}
+            Environment: ${{ inputs.environment }}
+            Triggered:   ${{ github.actor }}
+            Commit:      ${{ github.sha }}
+
+      - name: Send pipeline successful
+        if: inputs.status == 'success'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            Pipeline Successful
+
+            Repository:  ${{ github.repository }}
+            Branch:      ${{ github.ref_name }}
+            Environment: ${{ inputs.environment }}
+            Triggered:   ${{ github.actor }}
+            Run:         https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send pipeline failed
+        if: inputs.status == 'failed'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            Pipeline Failed
+
+            Repository:  ${{ github.repository }}
+            Branch:      ${{ github.ref_name }}
+            Environment: ${{ inputs.environment }}
+            Triggered:   ${{ github.actor }}
+            Run:         https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send pipeline skipped
+        if: inputs.status == 'skipped'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            Pipeline Skipped
+
+            Repository:  ${{ github.repository }}
+            Branch:      ${{ github.ref_name }}
+            Environment: ${{ inputs.environment }}
+            Triggered:   ${{ github.actor }}
+            Commit:      ${{ github.sha }}
+
+            No services required deployment.

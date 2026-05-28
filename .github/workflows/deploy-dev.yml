@@ -1,0 +1,280 @@
+name: Deploy - Dev
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  notify-start:
+    uses: ./.github/workflows/reusable-notify.yml
+    with:
+      status: start
+      environment: dev
+    secrets: inherit
+
+  detect:
+    needs: notify-start
+    uses: ./.github/workflows/reusable-detect.yml
+    with:
+      base_sha: ${{ github.event.before }}
+      head_sha: ${{ github.sha }}
+
+  snyk:
+    environment: dev
+    needs: detect
+    if: needs.detect.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.detect.outputs.matrix).include }}
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Run Snyk scan for ${{ matrix.name }}
+        run: |
+          cd "${{ matrix.dir }}"
+          snyk test --severity-threshold=high --json-file-output=snyk-report.json || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Send Snyk report to Telegram
+        if: always()
+        run: |
+          REPORT_PATH="${{ matrix.dir }}/snyk-report.json"
+
+          if [ -f "$REPORT_PATH" ]; then
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+              -F "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -F "document=@${REPORT_PATH}" \
+              -F "caption=Snyk Report: ${{ matrix.name }} | Commit: ${{ github.sha }} | Branch: ${{ github.ref_name }}"
+          else
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+              -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d "text=Snyk scan for ${{ matrix.name }} completed but no report file was generated."
+          fi
+
+  version-bump:
+    environment: dev
+    needs: detect
+    if: needs.detect.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+      service_versions: ${{ steps.bump.outputs.service_versions }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Bump versions for detected services
+        id: bump
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TYPE="${{ needs.detect.outputs.bump_type }}"
+          MATRIX_JSON='${{ needs.detect.outputs.matrix }}'
+          mapfile -t SERVICES < <(echo "$MATRIX_JSON" | jq -c '.include[]')
+
+          if [ "${#SERVICES[@]}" -eq 0 ]; then
+            echo "No services selected for version bump"
+            exit 1
+          fi
+
+          CHANGED_FILES=()
+          SERVICE_VERSIONS='{}'
+
+          for service_json in "${SERVICES[@]}"; do
+            SERVICE_NAME="$(echo "$service_json" | jq -r '.name')"
+            SERVICE_DIR="$(echo "$service_json" | jq -r '.dir')"
+            PKG_FILE="$(echo "$service_json" | jq -r '.package_file')"
+            LOCK_FILE="$SERVICE_DIR/package-lock.json"
+
+            if [ ! -f "$PKG_FILE" ]; then
+              echo "::error::Missing package.json for $SERVICE_NAME at $PKG_FILE"
+              exit 1
+            fi
+
+            CURRENT="$(jq -r '.version' "$PKG_FILE")"
+            if ! echo "$CURRENT" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::Invalid semver version for $SERVICE_NAME: $CURRENT"
+              exit 1
+            fi
+
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+            case "$TYPE" in
+              major)
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                ;;
+              minor)
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                ;;
+              *)
+                PATCH=$((PATCH + 1))
+                ;;
+            esac
+
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+            echo "Service: $SERVICE_NAME | Bump type: $TYPE | $CURRENT -> $NEW_VERSION"
+
+            TMP_FILE="$(mktemp)"
+            jq --arg version "$NEW_VERSION" '.version = $version' "$PKG_FILE" > "$TMP_FILE"
+            mv "$TMP_FILE" "$PKG_FILE"
+
+            CHANGED_FILES+=("$PKG_FILE")
+            if [ -f "$LOCK_FILE" ]; then
+              TMP_FILE="$(mktemp)"
+              jq --arg version "$NEW_VERSION" '.version = $version | if .packages and .packages[""] then .packages[""].version = $version else . end' "$LOCK_FILE" > "$TMP_FILE"
+              mv "$TMP_FILE" "$LOCK_FILE"
+              CHANGED_FILES+=("$LOCK_FILE")
+            fi
+
+            SERVICE_VERSIONS="$(echo "$SERVICE_VERSIONS" | jq --arg name "$SERVICE_NAME" --arg version "$NEW_VERSION" '. + {($name): $version}')"
+          done
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "${CHANGED_FILES[@]}"
+
+          if git diff --cached --quiet; then
+            echo "No version changes to commit"
+          else
+            git commit -m "chore(version): bump detected services [skip ci]"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+          SERVICE_VERSIONS_COMPACT="$(echo "$SERVICE_VERSIONS" | jq -c .)"
+          echo "bump_type=$TYPE" >> "$GITHUB_OUTPUT"
+          echo "service_versions=$SERVICE_VERSIONS_COMPACT" >> "$GITHUB_OUTPUT"
+
+  docker:
+    environment: dev
+    needs: [detect, version-bump]
+    if: needs.detect.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.detect.outputs.matrix).include }}
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Read bumped service version - ${{ matrix.name }}
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SERVICE_VERSIONS='${{ needs.version-bump.outputs.service_versions }}'
+          VERSION="$(echo "$SERVICE_VERSIONS" | jq -r --arg name "${{ matrix.name }}" '.[$name]')"
+
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "::error::No bumped version found for ${{ matrix.name }}"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Service ${{ matrix.name }} version: $VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push dev image - ${{ matrix.name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.docker_context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/dev/${{ matrix.name }}:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/dev/${{ matrix.name }}:latest
+          cache-from: type=gha,scope=dev-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=dev-${{ matrix.name }}
+
+  deploy:
+    environment: dev
+    needs: [detect, version-bump, docker]
+    if: needs.detect.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.detect.outputs.matrix).include }}
+      fail-fast: false
+    steps:
+      - name: Read bumped service version - ${{ matrix.name }}
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SERVICE_VERSIONS='${{ needs.version-bump.outputs.service_versions }}'
+          VERSION="$(echo "$SERVICE_VERSIONS" | jq -r --arg name "${{ matrix.name }}" '.[$name]')"
+
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "::error::No bumped version found for ${{ matrix.name }}"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Service ${{ matrix.name }} version: $VERSION"
+
+      - name: Deploy ${{ matrix.name }} via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets[matrix.ssh_host_secret] }}
+          username: ${{ secrets[matrix.ssh_user_secret] }}
+          key: ${{ secrets[matrix.ssh_key_secret] }}
+          script: bash /var/www/deploy-script-200m.sh ${{ matrix.name }} ${{ steps.version.outputs.version }} dev
+
+  notify-success:
+    needs: [detect, version-bump, docker, deploy]
+    if: always() && needs.detect.outputs.has_changes == 'true' && needs.version-bump.result == 'success' && needs.docker.result == 'success' && needs.deploy.result == 'success'
+    uses: ./.github/workflows/reusable-notify.yml
+    with:
+      status: success
+      environment: dev
+    secrets: inherit
+
+  notify-failed:
+    needs: [detect, version-bump, docker, deploy]
+    if: always() && (needs.detect.result == 'failure' || (needs.detect.outputs.has_changes == 'true' && (needs.version-bump.result == 'failure' || needs.docker.result == 'failure' || needs.deploy.result == 'failure')))
+    uses: ./.github/workflows/reusable-notify.yml
+    with:
+      status: failed
+      environment: dev
+    secrets: inherit
+
+  notify-no-changes:
+    needs: detect
+    if: always() && needs.detect.outputs.has_changes == 'false'
+    uses: ./.github/workflows/reusable-notify.yml
+    with:
+      status: skipped
+      environment: dev
+    secrets: inherit

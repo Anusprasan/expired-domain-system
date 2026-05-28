@@ -1,0 +1,57 @@
+{
+  "services": [
+    {
+      "name": "frontend",
+      "dir": "frontend",
+      "package_file": "frontend/package.json",
+      "dockerfile": "frontend/Dockerfile",
+      "docker_context": ".",
+      "ssh_host_secret": "SSH_HOST_FRONTEND",
+      "ssh_user_secret": "SSH_USER_FRONTEND",
+      "ssh_key_secret": "SSH_KEY_FRONTEND"
+    },
+    {
+      "name": "backend",
+      "dir": "backend",
+      "package_file": "backend/package.json",
+      "dockerfile": "backend/Dockerfile",
+      "docker_context": ".",
+      "exclude_prefixes": [
+        "backend/services/"
+      ],
+      "ssh_host_secret": "SSH_HOST_BACKEND",
+      "ssh_user_secret": "SSH_USER_BACKEND",
+      "ssh_key_secret": "SSH_KEY_BACKEND"
+    },
+    {
+      "name": "rank-checker-service",
+      "dir": "backend/services/rank-checker-service",
+      "package_file": "backend/services/rank-checker-service/package.json",
+      "dockerfile": "backend/services/rank-checker-service/Dockerfile",
+      "docker_context": ".",
+      "ssh_host_secret": "SSH_HOST_RANK_CHECKER",
+      "ssh_user_secret": "SSH_USER_RANK_CHECKER",
+      "ssh_key_secret": "SSH_KEY_RANK_CHECKER"
+    },
+    {
+      "name": "screenshot-taker-service",
+      "dir": "backend/services/screenshot-taker-service",
+      "package_file": "backend/services/screenshot-taker-service/package.json",
+      "dockerfile": "backend/services/screenshot-taker-service/Dockerfile",
+      "docker_context": ".",
+      "ssh_host_secret": "SSH_HOST_SCREENSHOT",
+      "ssh_user_secret": "SSH_USER_SCREENSHOT",
+      "ssh_key_secret": "SSH_KEY_SCREENSHOT"
+    },
+    {
+      "name": "short-link-checker-service",
+      "dir": "backend/services/short-link-checker-service",
+      "package_file": "backend/services/short-link-checker-service/package.json",
+      "dockerfile": "backend/services/short-link-checker-service/Dockerfile",
+      "docker_context": ".",
+      "ssh_host_secret": "SSH_HOST_SHORT_LINK",
+      "ssh_user_secret": "SSH_USER_SHORT_LINK",
+      "ssh_key_secret": "SSH_KEY_SHORT_LINK"
+    }
+  ]
+}

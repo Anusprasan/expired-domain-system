@@ -1,0 +1,165 @@
+name: Reusable Detect Changes
+
+on:
+  workflow_call:
+    inputs:
+      base_sha:
+        description: "Base commit for change detection"
+        required: false
+        default: ""
+        type: string
+      head_sha:
+        description: "Head commit for change detection"
+        required: false
+        default: ""
+        type: string
+    outputs:
+      matrix:
+        description: "JSON matrix of changed services"
+        value: ${{ jobs.detect.outputs.matrix }}
+      has_changes:
+        description: "Whether any services changed"
+        value: ${{ jobs.detect.outputs.has_changes }}
+      deploy_all:
+        description: "Whether deploy-all was requested"
+        value: ${{ jobs.detect.outputs.deploy_all }}
+      bump_type:
+        description: "Highest semantic version bump from the push range"
+        value: ${{ jobs.detect.outputs.bump_type }}
+      base_sha:
+        description: "Base commit used for change detection"
+        value: ${{ jobs.detect.outputs.base_sha }}
+      head_sha:
+        description: "Head commit used for change detection"
+        value: ${{ jobs.detect.outputs.head_sha }}
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      has_changes: ${{ steps.detect.outputs.has_changes }}
+      deploy_all: ${{ steps.detect.outputs.deploy_all }}
+      bump_type: ${{ steps.detect.outputs.bump_type }}
+      base_sha: ${{ steps.detect.outputs.base_sha }}
+      head_sha: ${{ steps.detect.outputs.head_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: detect
+        name: Detect changed services
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CATALOG=".github/service-catalog.json"
+          BEFORE="${{ inputs.base_sha }}"
+          HEAD_SHA="${{ inputs.head_sha }}"
+          ZERO_SHA="0000000000000000000000000000000000000000"
+
+          if [ -z "$BEFORE" ]; then
+            BEFORE="${{ github.event.before }}"
+          fi
+
+          if [ -z "$HEAD_SHA" ]; then
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          if ! git cat-file -e "$HEAD_SHA^{commit}" 2>/dev/null; then
+            HEAD_SHA="$(git rev-parse HEAD)"
+          fi
+
+          BASE_SHA="$BEFORE"
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "$ZERO_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            if git rev-parse "${HEAD_SHA}^" >/dev/null 2>&1; then
+              BASE_SHA="$(git rev-parse "${HEAD_SHA}^")"
+            else
+              BASE_SHA=""
+            fi
+          fi
+
+          if [ -n "$BASE_SHA" ]; then
+            CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
+            COMMIT_MESSAGES="$(git log --format=%B "$BASE_SHA..$HEAD_SHA" || true)"
+          else
+            CHANGED_FILES="$(git ls-tree -r "$HEAD_SHA" --name-only)"
+            COMMIT_MESSAGES="$(git log -1 --format=%B "$HEAD_SHA" || true)"
+          fi
+
+          DEPLOY_ALL="false"
+          if echo "$COMMIT_MESSAGES" | grep -Eiq '(^|[[:space:]])deploy-all:'; then
+            DEPLOY_ALL="true"
+          fi
+
+          BUMP_TYPE="patch"
+          if echo "$COMMIT_MESSAGES" | grep -Eiq '(^|[[:space:]])breaking:'; then
+            BUMP_TYPE="major"
+          elif echo "$COMMIT_MESSAGES" | grep -Eiq '(^|[[:space:]])feat:'; then
+            BUMP_TYPE="minor"
+          fi
+
+          service_changed() {
+            local service_json="$1"
+            local dir
+            dir="$(echo "$service_json" | jq -r '.dir')"
+
+            if [ "$DEPLOY_ALL" = "true" ]; then
+              return 0
+            fi
+
+            while IFS= read -r file; do
+              [ -z "$file" ] && continue
+
+              if [[ "$file" != "$dir" && "$file" != "$dir/"* ]]; then
+                continue
+              fi
+
+              local excluded="false"
+              while IFS= read -r prefix; do
+                [ -z "$prefix" ] && continue
+                if [[ "$file" == "$prefix"* ]]; then
+                  excluded="true"
+                  break
+                fi
+              done < <(echo "$service_json" | jq -r '.exclude_prefixes[]?')
+
+              if [ "$excluded" = "false" ]; then
+                return 0
+              fi
+            done <<< "$CHANGED_FILES"
+
+            return 1
+          }
+
+          MATRIX='{"include":[]}'
+          mapfile -t SERVICES < <(jq -c '.services[]' "$CATALOG")
+
+          for service_json in "${SERVICES[@]}"; do
+            if service_changed "$service_json"; then
+              MATRIX="$(echo "$MATRIX" | jq --argjson service "$service_json" '.include += [$service]')"
+              echo "Selected service: $(echo "$service_json" | jq -r '.name')"
+            fi
+          done
+
+          COUNT="$(echo "$MATRIX" | jq '.include | length')"
+          HAS_CHANGES="false"
+          if [ "$COUNT" -gt 0 ]; then
+            HAS_CHANGES="true"
+          fi
+
+          echo "Detection range: ${BASE_SHA:-<initial>}..$HEAD_SHA"
+          echo "deploy_all=$DEPLOY_ALL"
+          echo "bump_type=$BUMP_TYPE"
+          echo "has_changes=$HAS_CHANGES"
+
+          {
+            echo "matrix=$(echo "$MATRIX" | jq -c .)"
+            echo "has_changes=$HAS_CHANGES"
+            echo "deploy_all=$DEPLOY_ALL"
+            echo "bump_type=$BUMP_TYPE"
+            echo "base_sha=$BASE_SHA"
+            echo "head_sha=$HEAD_SHA"
+          } >> "$GITHUB_OUTPUT"

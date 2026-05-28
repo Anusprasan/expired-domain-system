@@ -1,0 +1,62 @@
+name: dev
+
+services:
+
+  frontend:
+    image: ghcr.io/sltheesan/dev/frontend:${VERSION}
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    env_file:
+      - .frontend.env
+    networks:
+      - shared
+
+  backend:
+    image: ghcr.io/sltheesan/dev/backend:${VERSION}
+    container_name: backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - .backend.env
+    networks:
+      - shared
+
+  rank-checker-service:
+    image: ghcr.io/sltheesan/dev/rank-checker-service:${VERSION}
+    container_name: rank-checker-service
+    restart: unless-stopped
+    ports:
+      - "4001:4000"
+    env_file:
+      - .rank-checker-service.env
+    networks:
+      - shared
+
+  screenshot-taker-service:
+    image: ghcr.io/sltheesan/dev/screenshot-taker-service:${VERSION}
+    container_name: screenshot-taker-service
+    restart: unless-stopped
+    ports:
+      - "4002:4000"
+    env_file:
+      - .screenshot-taker-service.env
+    networks:
+      - shared
+
+  short-link-checker-service:
+    image: ghcr.io/sltheesan/dev/short-link-checker-service:${VERSION}
+    container_name: short-link-checker-service
+    restart: unless-stopped
+    ports:
+      - "4003:4000"
+    env_file:
+      - .short-link-checker-service.env
+    networks:
+      - shared
+
+networks:
+  shared:
+    driver: bridge

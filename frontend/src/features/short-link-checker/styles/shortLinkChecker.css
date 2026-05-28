@@ -1,0 +1,825 @@
+.short-link-checker-page .short-link-checker-hero p {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+}
+
+.short-link-checker-page .short-link-checker-hero .management-header-actions {
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.short-link-checker-page .short-link-checker-hero .management-header-actions > .management-button,
+.short-link-checker-page .short-link-checker-hero .management-header-actions > .management-button-secondary,
+.short-link-checker-page .short-link-checker-hero .management-header-actions > a.management-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 160px;
+  min-height: 42px;
+  padding: 0 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.short-link-checker-page .short-link-checker-schedule-trigger.is-active {
+  color: #0d8a53;
+  box-shadow: inset 0 0 0 1px rgba(29, 160, 100, 0.28);
+}
+
+.short-link-checker-page a.management-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.short-link-checker-page .short-link-checker-live-status {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr)) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+}
+
+.short-link-checker-page .short-link-checker-live-current small {
+  max-height: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.short-link-checker-page .short-link-checker-live-current-link {
+  display: block;
+  margin-top: 2px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-panel);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.short-link-checker-page .short-link-checker-next-run {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.short-link-checker-page .short-link-checker-next-run span,
+.short-link-checker-page .short-link-checker-next-run small,
+.short-link-checker-page .short-link-checker-filter-panel p,
+.short-link-checker-page .short-link-checker-modal-header p {
+  color: var(--text-secondary);
+}
+
+.short-link-checker-page .short-link-checker-next-run span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.short-link-checker-page .short-link-checker-next-run strong,
+.short-link-checker-page .short-link-checker-next-run small {
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-live-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.short-link-checker-page .short-link-checker-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.68fr) minmax(0, 1.32fr);
+  gap: 18px;
+  align-items: end;
+  padding: 18px 20px;
+}
+
+.short-link-checker-page .short-link-checker-filter-panel h2 {
+  margin: 8px 0 4px;
+}
+
+.short-link-checker-page .short-link-checker-filter-panel p {
+  margin: 0;
+}
+
+.short-link-checker-page .short-link-checker-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(130px, 0.42fr) minmax(130px, 0.42fr) minmax(150px, 0.5fr) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.short-link-checker-page .short-link-checker-filter-controls .management-field {
+  gap: 6px;
+}
+
+.short-link-checker-page .short-link-checker-filter-controls .management-field > span {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.short-link-checker-page .short-link-checker-search-field input {
+  min-width: 0;
+}
+
+.short-link-checker-page .short-link-checker-filter-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding-bottom: 3px;
+}
+
+.short-link-checker-page .short-link-checker-filter-stats span {
+  padding: 6px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.short-link-checker-page .short-link-checker-results {
+  overflow: visible;
+}
+
+.short-link-checker-page .short-link-checker-table-wrap {
+  margin-top: 18px;
+}
+
+.short-link-checker-page .short-link-checker-table {
+  min-width: 1180px;
+  table-layout: fixed;
+}
+
+.short-link-checker-page .short-link-checker-table th:nth-child(1),
+.short-link-checker-page .short-link-checker-table td:nth-child(1) {
+  width: 260px;
+}
+
+.short-link-checker-page .short-link-checker-table th:nth-child(2),
+.short-link-checker-page .short-link-checker-table td:nth-child(2) {
+  width: 180px;
+}
+
+.short-link-checker-page .short-link-checker-table th:nth-child(3),
+.short-link-checker-page .short-link-checker-table td:nth-child(3),
+.short-link-checker-page .short-link-checker-table th:nth-child(4),
+.short-link-checker-page .short-link-checker-table td:nth-child(4) {
+  width: 150px;
+}
+
+.short-link-checker-page .short-link-checker-table th:nth-child(5),
+.short-link-checker-page .short-link-checker-table td:nth-child(5) {
+  width: 150px;
+}
+
+.short-link-checker-page .short-link-checker-table th:nth-child(6),
+.short-link-checker-page .short-link-checker-table td:nth-child(6) {
+  width: 135px;
+}
+
+.short-link-checker-page .short-link-checker-table th:nth-child(7),
+.short-link-checker-page .short-link-checker-table td:nth-child(7) {
+  width: 245px;
+}
+
+.short-link-checker-page .short-link-checker-link-cell,
+.short-link-checker-page .short-link-checker-money-cell,
+.short-link-checker-page .short-link-checker-final-cell,
+.short-link-checker-page .short-link-checker-telegram-cell {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.short-link-checker-page .short-link-checker-link-cell strong,
+.short-link-checker-page .short-link-checker-money-cell strong,
+.short-link-checker-page .short-link-checker-final-cell small,
+.short-link-checker-page .short-link-checker-link-cell a,
+.short-link-checker-page .short-link-checker-link-cell small,
+.short-link-checker-page .short-link-checker-telegram-cell small {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.short-link-checker-page .short-link-checker-link-cell a,
+.short-link-checker-page .short-link-checker-link-cell small,
+.short-link-checker-page .short-link-checker-money-cell span,
+.short-link-checker-page .short-link-checker-final-cell small,
+.short-link-checker-page .short-link-checker-telegram-cell small {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.short-link-checker-page .short-link-checker-final-cell .management-error,
+.short-link-checker-page .short-link-checker-telegram-cell .management-error {
+  margin: 4px 0 0;
+  padding: 7px 8px;
+  font-size: 0.78rem;
+}
+
+.short-link-checker-page .short-link-checker-verification-note,
+.short-link-checker-page .short-link-checker-verification-inline {
+  padding: 7px 8px;
+  border: 1px solid rgba(217, 119, 6, 0.24);
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+  font-weight: 800;
+}
+
+.short-link-checker-page .short-link-checker-verification-inline {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-row-actions {
+  align-items: center;
+}
+
+.short-link-checker-page .management-badge.is-danger {
+  border-color: rgba(220, 38, 38, 0.24);
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+}
+
+.short-link-checker-page .management-modal-backdrop {
+  padding: clamp(10px, 3vw, 26px);
+}
+
+.short-link-checker-page .management-modal-backdrop.is-centered .short-link-checker-setup-modal,
+.short-link-checker-page .management-modal-backdrop.is-centered .short-link-checker-import-modal,
+.short-link-checker-page .management-modal-backdrop.is-centered .short-link-checker-telegram-modal,
+.short-link-checker-page .management-modal-backdrop.is-centered .short-link-checker-schedule-modal,
+.short-link-checker-page .management-modal-backdrop.is-centered .short-link-checker-delete-modal,
+.short-link-checker-page .management-modal-backdrop.is-centered .short-link-checker-output-modal {
+  transform: none;
+}
+
+.short-link-checker-page .short-link-checker-setup-modal,
+.short-link-checker-page .short-link-checker-import-modal,
+.short-link-checker-page .short-link-checker-telegram-modal,
+.short-link-checker-page .short-link-checker-schedule-modal,
+.short-link-checker-page .short-link-checker-delete-modal {
+  width: min(760px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  padding: clamp(18px, 2.4vw, 26px);
+}
+
+.short-link-checker-page .short-link-checker-delete-modal {
+  width: min(520px, calc(100vw - 28px));
+}
+
+.short-link-checker-page .short-link-checker-output-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow: hidden;
+  padding: clamp(18px, 2.4vw, 26px);
+}
+
+.short-link-checker-page .short-link-checker-modal-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.short-link-checker-page .short-link-checker-modal-header h2 {
+  margin: 8px 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-modal-header p {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-modal-header .management-inline-actions {
+  justify-content: flex-end;
+}
+
+.short-link-checker-page .short-link-checker-modal-form {
+  display: grid;
+  gap: 14px;
+}
+
+.short-link-checker-page .short-link-checker-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.short-link-checker-page textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.short-link-checker-page .short-link-checker-import-textarea {
+  min-height: 128px;
+  font-family: Consolas, "Liberation Mono", monospace;
+  font-size: 0.88rem;
+}
+
+.short-link-checker-page .short-link-checker-import-summary,
+.short-link-checker-page .short-link-checker-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.short-link-checker-page .short-link-checker-import-summary {
+  margin-top: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-panel);
+}
+
+.short-link-checker-page .short-link-checker-import-summary span,
+.short-link-checker-page .short-link-checker-pagination span {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.short-link-checker-page .short-link-checker-pagination {
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.short-link-checker-page .short-link-checker-pagination > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.short-link-checker-page .short-link-checker-pagination .management-field {
+  width: 120px;
+  gap: 4px;
+}
+
+.short-link-checker-page .short-link-checker-import-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+}
+
+.short-link-checker-page .short-link-checker-import-table {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+}
+
+.short-link-checker-page .short-link-checker-import-table th,
+.short-link-checker-page .short-link-checker-import-table td {
+  padding: 10px;
+  border-top: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.short-link-checker-page .short-link-checker-import-table thead th {
+  border-top: 0;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.short-link-checker-page .short-link-checker-import-table input:not([type="checkbox"]),
+.short-link-checker-page .short-link-checker-import-table select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+
+.short-link-checker-page .short-link-checker-import-match-note {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.short-link-checker-page .short-link-checker-import-result {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-panel);
+}
+
+.short-link-checker-page .short-link-checker-import-result.is-warning {
+  border-color: rgba(190, 130, 20, 0.42);
+  background: rgba(190, 130, 20, 0.08);
+}
+
+.short-link-checker-page .short-link-checker-import-result > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.short-link-checker-page .short-link-checker-import-result span,
+.short-link-checker-page .short-link-checker-import-result small {
+  color: var(--text-secondary);
+}
+
+.short-link-checker-page .short-link-checker-skipped-list {
+  display: grid;
+  gap: 8px;
+}
+
+.short-link-checker-page .short-link-checker-skipped-list > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-card);
+}
+
+.short-link-checker-page .short-link-checker-skipped-list span,
+.short-link-checker-page .short-link-checker-skipped-list small {
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-import-guide {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.short-link-checker-page .short-link-checker-import-guide strong {
+  color: var(--text-primary);
+}
+
+.short-link-checker-page .short-link-checker-import-guide span {
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-import-tools {
+  margin-top: 4px;
+}
+
+.short-link-checker-page .short-link-checker-import-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.short-link-checker-page .short-link-checker-import-count {
+  min-width: 110px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-panel);
+  text-align: center;
+}
+
+.short-link-checker-page .short-link-checker-import-count strong,
+.short-link-checker-page .short-link-checker-import-count span {
+  display: block;
+}
+
+.short-link-checker-page .short-link-checker-import-count span {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.short-link-checker-page .short-link-checker-alert-codes {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-panel);
+}
+
+.short-link-checker-page .short-link-checker-alert-rules {
+  display: grid;
+  gap: 10px;
+}
+
+.short-link-checker-page .short-link-checker-alert-codes-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.short-link-checker-page .short-link-checker-alert-codes-header div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.short-link-checker-page .short-link-checker-alert-codes-header span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.short-link-checker-page .short-link-checker-alert-code-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.short-link-checker-page .short-link-checker-code-option {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-card);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.short-link-checker-page .short-link-checker-custom-code-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.7fr) minmax(160px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.short-link-checker-page .short-link-checker-custom-code-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.short-link-checker-page .short-link-checker-custom-code-chip {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.short-link-checker-page .short-link-checker-custom-code-chip small {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.short-link-checker-page .short-link-checker-custom-code-chip:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.short-link-checker-page .short-link-checker-telegram-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.short-link-checker-page .short-link-checker-telegram-stats .management-error {
+  width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+}
+
+.short-link-checker-page .short-link-checker-schedule-inline-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.short-link-checker-page .short-link-checker-schedule-inline-status div {
+  min-width: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.short-link-checker-page .short-link-checker-schedule-inline-status span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.short-link-checker-page .short-link-checker-schedule-inline-status strong,
+.short-link-checker-page .short-link-checker-schedule-inline-status small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-schedule-inline-status small {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+.short-link-checker-page .short-link-checker-schedule-error {
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.short-link-checker-page .short-link-checker-delete-warning {
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.short-link-checker-page .short-link-checker-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.short-link-checker-page .short-link-checker-output-frame {
+  flex: 1 1 auto;
+  height: clamp(320px, 66dvh, 760px);
+  min-height: 260px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+  padding: clamp(10px, 1.6vw, 18px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.06), rgba(37, 99, 235, 0.1)),
+    repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.08) 0 8px, transparent 8px 16px),
+    var(--surface-panel);
+}
+
+.short-link-checker-page .short-link-checker-output-frame img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+}
+
+.short-link-checker-page .short-link-checker-output-empty {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  align-self: stretch;
+  width: 100%;
+  min-height: 260px;
+  align-content: center;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.short-link-checker-page .short-link-checker-output-empty strong {
+  color: var(--text-primary);
+}
+
+.short-link-checker-page .short-link-checker-output-empty span {
+  overflow-wrap: anywhere;
+}
+
+.short-link-checker-page .short-link-checker-output-details {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.short-link-checker-page .short-link-checker-output-details span {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+  .short-link-checker-page .short-link-checker-live-status,
+  .short-link-checker-page .short-link-checker-filter-panel,
+  .short-link-checker-page .short-link-checker-filter-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .short-link-checker-page .short-link-checker-hero .management-header-actions > .management-button,
+  .short-link-checker-page .short-link-checker-hero .management-header-actions > .management-button-secondary,
+  .short-link-checker-page .short-link-checker-hero .management-header-actions > a.management-button-secondary {
+    width: 100%;
+  }
+
+  .short-link-checker-page .short-link-checker-live-actions {
+    justify-content: stretch;
+  }
+
+  .short-link-checker-page .short-link-checker-live-actions .management-button-secondary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .short-link-checker-page .short-link-checker-setup-modal,
+  .short-link-checker-page .short-link-checker-import-modal,
+  .short-link-checker-page .short-link-checker-telegram-modal,
+  .short-link-checker-page .short-link-checker-schedule-modal,
+  .short-link-checker-page .short-link-checker-delete-modal,
+  .short-link-checker-page .short-link-checker-output-modal {
+    width: calc(100vw - 18px);
+    max-height: calc(100dvh - 18px);
+    padding: 16px;
+  }
+
+  .short-link-checker-page .short-link-checker-modal-header,
+  .short-link-checker-page .short-link-checker-field-grid,
+  .short-link-checker-page .short-link-checker-import-footer,
+  .short-link-checker-page .short-link-checker-schedule-inline-status,
+  .short-link-checker-page .short-link-checker-custom-code-row {
+    grid-template-columns: 1fr;
+  }
+
+  .short-link-checker-page .short-link-checker-modal-header .management-inline-actions,
+  .short-link-checker-page .short-link-checker-modal-actions,
+  .short-link-checker-page .short-link-checker-alert-codes-header {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .short-link-checker-page .short-link-checker-modal-header .management-button-secondary,
+  .short-link-checker-page .short-link-checker-modal-actions .management-button,
+  .short-link-checker-page .short-link-checker-modal-actions .management-button-secondary,
+  .short-link-checker-page .short-link-checker-alert-codes-header .management-button-secondary {
+    flex: 1 1 140px;
+  }
+
+  .short-link-checker-page .short-link-checker-output-frame {
+    height: 58dvh;
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 520px) {
+  .short-link-checker-page .management-modal-backdrop {
+    padding: 8px;
+  }
+
+  .short-link-checker-page .short-link-checker-setup-modal,
+  .short-link-checker-page .short-link-checker-import-modal,
+  .short-link-checker-page .short-link-checker-telegram-modal,
+  .short-link-checker-page .short-link-checker-schedule-modal,
+  .short-link-checker-page .short-link-checker-delete-modal,
+  .short-link-checker-page .short-link-checker-output-modal {
+    width: calc(100vw - 10px);
+    max-height: calc(100dvh - 10px);
+    padding: 14px;
+  }
+
+  .short-link-checker-page .short-link-checker-output-frame {
+    height: 54dvh;
+    padding: 8px;
+  }
+
+  .short-link-checker-page .short-link-checker-output-details span {
+    width: 100%;
+    border-radius: 14px;
+  }
+}

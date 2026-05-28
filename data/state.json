@@ -1,0 +1,11 @@
+{
+  "sites": [],
+  "captures": [],
+  "schedule": {
+    "enabled": false,
+    "delayMinutes": 60,
+    "updatedAt": null,
+    "lastRunAt": null,
+    "nextRunAt": null
+  }
+}
