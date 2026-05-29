@@ -5,19 +5,33 @@ import { verifyToken } from "../utils/jwt.js";
 import { bulkUpdateMoneySiteStatusesService } from "../../modules/money-sites/moneySite.service.js";
 import { sendMoneySiteBlockedPushNotifications } from "../../modules/money-sites/moneySitePush.service.js";
 import { MONEY_SITE_ACCESS_PRIVILEGES } from "../../modules/money-sites/moneySite.constants.js";
+import { EXPIRED_DOMAIN_ACCESS_PRIVILEGES } from "../../modules/expired-domains/expiredDomain.constants.js";
+import { WAYBACK_CHECKER_ACCESS_PRIVILEGES } from "../../modules/wayback-checker/waybackChecker.constants.js";
 
 function getPrivilegeKeys(user) {
   return user?.groupId?.privilegeIds?.map((item) => item.key) || [];
 }
 
-function hasMoneySiteAccess(user) {
+function hasAnyAccessPrivilege(user, accessPrivileges = []) {
+  const groupName = user?.groupId?.name?.toLowerCase();
   const privilegeKeys = getPrivilegeKeys(user);
-  return MONEY_SITE_ACCESS_PRIVILEGES.some((privilegeKey) => privilegeKeys.includes(privilegeKey));
+
+  return groupName === "admin"
+    || privilegeKeys.includes("ADMIN_ACCESS")
+    || accessPrivileges.some((privilegeKey) => privilegeKeys.includes(privilegeKey));
 }
 
-async function emitMoneySiteEventToAuthorizedSockets(io, eventName, payload) {
-  const moneySiteNamespace = io.of("/money-sites");
-  const sockets = [...moneySiteNamespace.sockets.values()];
+async function emitEventToAuthorizedSockets({
+  io,
+  namespaceName,
+  eventName,
+  payload,
+  accessPrivileges,
+  forbiddenEventName,
+  forbiddenMessage,
+}) {
+  const namespace = io.of(namespaceName);
+  const sockets = [...namespace.sockets.values()];
 
   if (!sockets.length) {
     return;
@@ -43,7 +57,7 @@ async function emitMoneySiteEventToAuthorizedSockets(io, eventName, payload) {
 
   const authorizedUserIds = new Set(
     users
-      .filter((user) => hasMoneySiteAccess(user))
+      .filter((user) => hasAnyAccessPrivilege(user, accessPrivileges))
       .map((user) => String(user._id))
   );
 
@@ -56,8 +70,8 @@ async function emitMoneySiteEventToAuthorizedSockets(io, eventName, payload) {
     }
 
     if (!authorizedUserIds.has(socketUserId)) {
-      socket.emit("money-sites:forbidden", {
-        message: "You do not have permission to receive money-site live updates.",
+      socket.emit(forbiddenEventName, {
+        message: forbiddenMessage,
       });
       socket.disconnect(true);
       return;
@@ -83,40 +97,78 @@ function getSocketToken(socket) {
   return "";
 }
 
-async function authenticateAppSocket(socket, next) {
-  try {
-    const token = getSocketToken(socket);
+function authenticateAppSocket(accessPrivileges = []) {
+  return async function authenticateNamespaceSocket(socket, next) {
+    try {
+      const token = getSocketToken(socket);
 
-    if (!token) {
+      if (!token) {
+        next(new Error("Unauthorized"));
+        return;
+      }
+
+      const decoded = verifyToken(token);
+      const user = await User.findById(decoded.userId).populate({
+        path: "groupId",
+        populate: { path: "privilegeIds" },
+      });
+
+      if (!user || user.status !== "active") {
+        next(new Error("Unauthorized"));
+        return;
+      }
+
+      if (!hasAnyAccessPrivilege(user, accessPrivileges)) {
+        next(new Error("Forbidden"));
+        return;
+      }
+
+      socket.data.user = {
+        id: String(user._id),
+        email: user.email,
+      };
+
+      next();
+    } catch {
       next(new Error("Unauthorized"));
-      return;
     }
+  };
+}
 
-    const decoded = verifyToken(token);
-    const user = await User.findById(decoded.userId).populate({
-      path: "groupId",
-      populate: { path: "privilegeIds" },
-    });
+async function emitMoneySiteEventToAuthorizedSockets(io, eventName, payload) {
+  await emitEventToAuthorizedSockets({
+    io,
+    namespaceName: "/money-sites",
+    eventName,
+    payload,
+    accessPrivileges: MONEY_SITE_ACCESS_PRIVILEGES,
+    forbiddenEventName: "money-sites:forbidden",
+    forbiddenMessage: "You do not have permission to receive money-site live updates.",
+  });
+}
 
-    if (!user || user.status !== "active") {
-      next(new Error("Unauthorized"));
-      return;
-    }
+async function emitExpiredDomainEventToAuthorizedSockets(io, eventName, payload) {
+  await emitEventToAuthorizedSockets({
+    io,
+    namespaceName: "/expired-domains",
+    eventName,
+    payload,
+    accessPrivileges: EXPIRED_DOMAIN_ACCESS_PRIVILEGES,
+    forbiddenEventName: "expired-domains:forbidden",
+    forbiddenMessage: "You do not have permission to receive expired-domain live updates.",
+  });
+}
 
-    if (!hasMoneySiteAccess(user)) {
-      next(new Error("Forbidden"));
-      return;
-    }
-
-    socket.data.user = {
-      id: String(user._id),
-      email: user.email,
-    };
-
-    next();
-  } catch {
-    next(new Error("Unauthorized"));
-  }
+async function emitWaybackCheckerEventToAuthorizedSockets(io, eventName, payload) {
+  await emitEventToAuthorizedSockets({
+    io,
+    namespaceName: "/wayback-checker",
+    eventName,
+    payload,
+    accessPrivileges: WAYBACK_CHECKER_ACCESS_PRIVILEGES,
+    forbiddenEventName: "wayback-checker:forbidden",
+    forbiddenMessage: "You do not have permission to receive WayBack checker live updates.",
+  });
 }
 
 function authenticateCheckerSocket(socket, next) {
@@ -147,14 +199,36 @@ export function attachRealtimeServer(server, app) {
     },
   });
   const moneySiteNamespace = io.of("/money-sites");
+  const expiredDomainNamespace = io.of("/expired-domains");
+  const waybackCheckerNamespace = io.of("/wayback-checker");
   const checkerNamespace = io.of("/money-sites-checker");
   const emitAuthorizedMoneySiteEvent = async (eventName, payload) => {
     await emitMoneySiteEventToAuthorizedSockets(io, eventName, payload);
   };
+  const emitAuthorizedExpiredDomainEvent = async (eventName, payload) => {
+    await emitExpiredDomainEventToAuthorizedSockets(io, eventName, payload);
+  };
+  const emitAuthorizedWaybackCheckerEvent = async (eventName, payload) => {
+    await emitWaybackCheckerEventToAuthorizedSockets(io, eventName, payload);
+  };
 
-  moneySiteNamespace.use(authenticateAppSocket);
+  moneySiteNamespace.use(authenticateAppSocket(MONEY_SITE_ACCESS_PRIVILEGES));
   moneySiteNamespace.on("connection", (socket) => {
     socket.emit("money-sites:connected", {
+      connectedAt: new Date().toISOString(),
+    });
+  });
+
+  expiredDomainNamespace.use(authenticateAppSocket(EXPIRED_DOMAIN_ACCESS_PRIVILEGES));
+  expiredDomainNamespace.on("connection", (socket) => {
+    socket.emit("expired-domains:connected", {
+      connectedAt: new Date().toISOString(),
+    });
+  });
+
+  waybackCheckerNamespace.use(authenticateAppSocket(WAYBACK_CHECKER_ACCESS_PRIVILEGES));
+  waybackCheckerNamespace.on("connection", (socket) => {
+    socket.emit("wayback-checker:connected", {
       connectedAt: new Date().toISOString(),
     });
   });
@@ -213,5 +287,7 @@ export function attachRealtimeServer(server, app) {
 
   app.set("io", io);
   app.set("emitMoneySiteRealtimeEvent", emitAuthorizedMoneySiteEvent);
+  app.set("emitExpiredDomainRealtimeEvent", emitAuthorizedExpiredDomainEvent);
+  app.set("emitWaybackCheckerRealtimeEvent", emitAuthorizedWaybackCheckerEvent);
   return io;
 }

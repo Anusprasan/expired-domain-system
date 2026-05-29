@@ -31,6 +31,17 @@ export const NAV_ITEMS = [
     requiredAnyPrivileges: ["VIEW_EXPIRED_DOMAINS", "IMPORT_EXPIRED_DOMAINS"],
   },
   {
+    label: "Wayback Checker",
+    path: "/wayback-checker",
+    icon: "history",
+    description: "Take WayBack domains and submit pass/fail results",
+    requiredAnyPrivileges: [
+      "VIEW_WAYBACK_CHECKER",
+      "DO_WAYBACK_CHECKER",
+      "VIEW_EXPIRED_DOMAINS",
+    ],
+  },
+  {
     label: "Screenshot Taker",
     path: "/screenshot-taker",
     icon: "camera",

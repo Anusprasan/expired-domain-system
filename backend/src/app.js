@@ -25,6 +25,7 @@ import siteAnalyticsRoutes from "./modules/site-analytics/siteAnalytics.route.js
 import databaseBackupRoutes from "./modules/database-backups/databaseBackup.route.js";
 import websiteSnapshotRoutes from "./modules/website-snapshots/websiteSnapshot.route.js";
 import expiredDomainRoutes from "./modules/expired-domains/expiredDomain.route.js";
+import waybackCheckerRoutes from "./modules/wayback-checker/waybackChecker.route.js";
 
 const app = express();
 const jsonBodyLimit = process.env.API_JSON_LIMIT || "35mb";
@@ -60,5 +61,6 @@ app.use("/api/site-analytics", siteAnalyticsRoutes);
 app.use("/api/database-backups", databaseBackupRoutes);
 app.use("/api/website-snapshots", websiteSnapshotRoutes);
 app.use("/api/expired-domains", expiredDomainRoutes);
+app.use("/api/wayback-checker", waybackCheckerRoutes);
 
 export default app;

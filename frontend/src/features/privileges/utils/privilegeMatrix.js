@@ -44,9 +44,35 @@ const ACTION_LABELS = {
 
 const MODULE_LABEL_OVERRIDES = {
   "article-pool": "Content Pool",
+  "expired-domains": "Expired Domains",
+  "wayback-checker": "Wayback Checker",
 };
 
 const PRIVILEGE_COPY_OVERRIDES = {
+  VIEW_EXPIRED_DOMAINS: {
+    name: "View Expired Domains",
+    description: "View expired-domain batches, process stages, and domain lists.",
+  },
+  CREATE_EXPIRED_DOMAINS: {
+    name: "Create Expired Domains",
+    description: "Create expired-domain records manually when needed.",
+  },
+  IMPORT_EXPIRED_DOMAINS: {
+    name: "Import Expired Domains",
+    description: "Upload and import expired-domain lists into new batches.",
+  },
+  DELETE_EXPIRED_DOMAINS: {
+    name: "Delete Expired Domains",
+    description: "Delete expired-domain records when a batch or record must be removed.",
+  },
+  VIEW_WAYBACK_CHECKER: {
+    name: "View Wayback Checker",
+    description: "View Wayback checking batches, taken domains, and submitted results.",
+  },
+  DO_WAYBACK_CHECKER: {
+    name: "Do Wayback Checking",
+    description: "Take Wayback domains and submit pass or fail checking results.",
+  },
   READ_ARTICLE_POOL: {
     name: "Read Content Pool",
     description: "View content pool records and creator details.",
@@ -108,6 +134,7 @@ function toTitleCase(value = "") {
 export function getPrivilegeAction(privilege) {
   if (privilege?.key === "TRACK_REPORTING_TASKS") return "track";
   if (privilege?.key === "DO_DDOS_REPORTING_TASKS") return "ddos";
+  if (privilege?.key === "DO_WAYBACK_CHECKER") return "do";
 
   const source = `${privilege.key || ""} ${privilege.name || ""}`.toUpperCase();
 

@@ -35,6 +35,7 @@ import SiteAnalyticsPage from "../../features/site-analytics/pages/SiteAnalytics
 import SiteAnalyticsDetailPage from "../../features/site-analytics/pages/SiteAnalyticsDetailPage";
 import WebsiteSnapshotsPage from "../../features/website-snapshots/pages/WebsiteSnapshotsPage";
 import ExpiredDomainsPage from "../../features/expired-domains/pages/ExpiredDomainsPage";
+import WaybackCheckerPage from "../../features/wayback-checker/pages/WaybackCheckerPage";
 
 const moduleRoutes = NAV_ITEMS.filter((item) => item.path !== "/dashboard");
 const reportingReviewRouteItem = {
@@ -87,6 +88,7 @@ const pageByPath = {
   "/cuttly-link-checker": <CuttlyLinkCheckerPage />,
   "/money-sites": <MoneySitesPage />,
   "/expired-domains": <ExpiredDomainsPage />,
+  "/wayback-checker": <WaybackCheckerPage />,
   "/site-analytics": <SiteAnalyticsPage />,
   "/website-snapshots": <WebsiteSnapshotsPage />,
 };

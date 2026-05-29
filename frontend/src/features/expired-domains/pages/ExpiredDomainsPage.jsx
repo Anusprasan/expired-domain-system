@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HotTable } from "@handsontable/react-wrapper";
 import { registerAllModules } from "handsontable/registry";
+import { io } from "socket.io-client";
 import ToastNotice from "../../../shared/components/ToastNotice";
 import { hasAnyPrivilege, hasPrivilege } from "../../../shared/utils/permissions";
+import { getSocketBaseUrl } from "../../../shared/utils/socketBaseUrl";
 import { useAuth } from "../../auth/hooks/useAuth";
+import { getToken } from "../../auth/utils/authStorage";
 import UploadExpiredDomainsForm from "../components/UploadExpiredDomainsForm";
 import {
   getCurrentExpiredDomainBatch,
@@ -21,6 +24,7 @@ import {
 } from "../../rank-checker/api/rankCheckerApi";
 import AdminPanel from "../../rank-checker/components/AdminPanel";
 import BulkDomainCheckerPanel from "../../rank-checker/components/BulkDomainCheckerPanel";
+import { createWaybackBatchApi } from "../../wayback-checker/api/waybackCheckerApi";
 import "handsontable/styles/handsontable.min.css";
 import "handsontable/styles/ht-theme-main.min.css";
 import "../../../shared/styles/management.css";
@@ -1054,6 +1058,7 @@ export default function ExpiredDomainsPage() {
     loading: false,
   });
   const copiedHandsonRef = useRef(copiedHandson);
+  const realtimeRefreshTimerRef = useRef(null);
   const [copiedHandsonPasteNotice, setCopiedHandsonPasteNotice] = useState({
     tone: "",
     message: "",
@@ -1155,6 +1160,16 @@ export default function ExpiredDomainsPage() {
   const pendingWorkflowBatchNumber = isPendingProcessStatus(activeProcessStatus)
     ? processBatchRows.find((row) => row.pendingSubBatchCount > 0 || row.mainBatchSubBatchCount > 0)?.batchNumber || 0
     : 0;
+  const waybackCheckingBatchNumbers = useMemo(
+    () =>
+      new Set(
+        subBatches
+          .filter((item) => normalizeProcessStatus(item.status) === "waybackchecking")
+          .map((item) => Number(item.batchNumber || 1))
+          .filter(Boolean)
+      ),
+    [subBatches]
+  );
   const statusSubBatches = useMemo(
     () =>
       subBatches
@@ -1163,6 +1178,11 @@ export default function ExpiredDomainsPage() {
           status: normalizeProcessStatus(item.status),
         }))
         .filter((item) => item.status === activeProcessStatus)
+        .filter((item) =>
+          activeProcessStatus === "finalstage"
+            ? !waybackCheckingBatchNumbers.has(Number(item.batchNumber || 1))
+            : true
+        )
         .filter((item) =>
           !isPendingProcessStatus(activeProcessStatus) || !mainBatchAddedSubBatchKeys.has(getSubBatchKey(item))
         )
@@ -1175,7 +1195,7 @@ export default function ExpiredDomainsPage() {
 
           return Number(left.subBatchNumber || 1) - Number(right.subBatchNumber || 1);
         }),
-    [activeProcessStatus, mainBatchAddedSubBatchKeys, subBatches]
+    [activeProcessStatus, mainBatchAddedSubBatchKeys, subBatches, waybackCheckingBatchNumbers]
   );
   const processBatchOptions = useMemo(() => {
     const stageBatchNumbers = new Set(
@@ -1248,10 +1268,16 @@ export default function ExpiredDomainsPage() {
     () => filteredSubBatches.reduce((sum, item) => sum + Number(item.domainCount || 0), 0),
     [filteredSubBatches]
   );
+  const availableNawalaBatchNumbers = useMemo(
+    () => new Set(processBatchOptions.map((item) => Number(item.batchNumber || 0)).filter(Boolean)),
+    [processBatchOptions]
+  );
   const activeNawalaBatchNumber = activeProcessStatus === "finalstage"
     ? activeProcessBatch === "all"
       ? Number(processBatchOptions[processBatchOptions.length - 1]?.batchNumber || filteredSubBatches[filteredSubBatches.length - 1]?.batchNumber || 0)
-      : Number(activeProcessBatch || 0)
+      : availableNawalaBatchNumbers.has(Number(activeProcessBatch || 0))
+        ? Number(activeProcessBatch || 0)
+        : 0
     : 0;
   const activeNawalaCheckingResult = useMemo(() => {
     if (!nawalaCheckingResult) {
@@ -1277,6 +1303,12 @@ export default function ExpiredDomainsPage() {
       },
     [activeNawalaBatchNumber, activeNawalaCheckingResult, filteredSubBatchDomainCount]
   );
+  const visibleNawalaResultCount = (visibleNawalaCheckingResult?.results || []).length;
+  const hasAvailableNawalaCheckingBatch = activeProcessStatus === "finalstage"
+    && activeNawalaBatchNumber > 0
+    && filteredSubBatches.length > 0
+    && visibleNawalaResultCount > 0
+    && !Boolean(activeNawalaCheckingResult?.movedToWayBackAt);
   const currentPendingBatchNumber =
     isPendingProcessStatus(activeProcessStatus) && pendingWorkflowBatchNumber
       ? pendingWorkflowBatchNumber
@@ -1348,16 +1380,6 @@ export default function ExpiredDomainsPage() {
   );
   const activeBulkCheckingBatchNumber = activeBulkCheckingBatchNumbers[0] || 0;
   const hasActiveBulkCheckingBatch = activeBulkCheckingBatchNumbers.length > 0;
-  const waybackCheckingBatchNumbers = useMemo(
-    () =>
-      new Set(
-        subBatches
-          .filter((item) => normalizeProcessStatus(item.status) === "waybackchecking")
-          .map((item) => Number(item.batchNumber || 1))
-          .filter(Boolean)
-      ),
-    [subBatches]
-  );
   const activeNawalaCheckingBatchNumbers = useMemo(
     () => Array.from(
       new Set(
@@ -1665,6 +1687,63 @@ export default function ExpiredDomainsPage() {
   }, [canUploadExpiredDomains, loadBatchState]);
 
   useEffect(() => {
+    if (!canProcessExpiredDomains && !canUploadExpiredDomains) {
+      return undefined;
+    }
+
+    const token = getToken();
+
+    if (!token) {
+      return undefined;
+    }
+
+    const socket = io(`${getSocketBaseUrl()}/expired-domains`, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
+
+    const refreshFromRealtime = () => {
+      if (realtimeRefreshTimerRef.current) {
+        window.clearTimeout(realtimeRefreshTimerRef.current);
+      }
+
+      realtimeRefreshTimerRef.current = window.setTimeout(() => {
+        realtimeRefreshTimerRef.current = null;
+        const refreshes = [];
+
+        if (canProcessExpiredDomains) {
+          refreshes.push(load());
+        }
+
+        if (canUploadExpiredDomains) {
+          refreshes.push(loadBatchState());
+        }
+
+        void Promise.allSettled(refreshes);
+      }, 300);
+    };
+
+    const handleForbidden = (payload = {}) => {
+      setError(payload.message || "You do not have permission to receive expired-domain live updates.");
+      socket.disconnect();
+    };
+
+    socket.on("expired-domains:changed", refreshFromRealtime);
+    socket.on("expired-domains:forbidden", handleForbidden);
+
+    return () => {
+      if (realtimeRefreshTimerRef.current) {
+        window.clearTimeout(realtimeRefreshTimerRef.current);
+        realtimeRefreshTimerRef.current = null;
+      }
+
+      socket.off("expired-domains:changed", refreshFromRealtime);
+      socket.off("expired-domains:forbidden", handleForbidden);
+      socket.disconnect();
+    };
+  }, [canProcessExpiredDomains, canUploadExpiredDomains, load, loadBatchState]);
+
+  useEffect(() => {
     copiedHandsonRef.current = copiedHandson;
   }, [copiedHandson]);
 
@@ -1742,7 +1821,7 @@ export default function ExpiredDomainsPage() {
             domains,
           });
 
-          return items.map((item, index) => {
+          return items.filter((item) => String(item.nawalaStatus || "").trim()).map((item, index) => {
             const processStatus = normalizeProcessStatus(item.processStatus || subBatch.status);
             const status = item.nawalaStatus || (processStatus === "waybackchecking" ? "tidak ada" : "unknown");
             const domain = item.domain;
@@ -2068,7 +2147,7 @@ export default function ExpiredDomainsPage() {
     }
   };
 
-  const loadProcessedBatchDomains = async (item) => {
+  const loadProcessedBatchDomains = useCallback(async (item) => {
     const processedSubBatches = item.subBatches || [];
     const subBatchesWithDomains = await Promise.all(
       processedSubBatches.map(async (subBatch) => {
@@ -2086,7 +2165,93 @@ export default function ExpiredDomainsPage() {
       subBatches: subBatchesWithDomains,
       domains: subBatchesWithDomains.flatMap((subBatch) => subBatch.domains || []),
     };
-  };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !canProcessExpiredDomains
+      || effectiveActiveTab !== "process"
+      || activeProcessStatus !== "bulkchecking"
+      || loading
+      || !visibleProcessBatchRows.length
+    ) {
+      return undefined;
+    }
+
+    const selectedBatchNumber = activeProcessBatch === "all" ? 0 : Number(activeProcessBatch || 0);
+    const targetItem = visibleProcessBatchRows.find((item) =>
+      selectedBatchNumber && Number(item.batchNumber || 0) === selectedBatchNumber
+    ) || visibleProcessBatchRows[0];
+    const targetBatchNumber = Number(targetItem?.batchNumber || 0);
+
+    if (!targetBatchNumber || !targetItem?.subBatches?.length) {
+      return undefined;
+    }
+
+    const seededDomainCount = String(bulkCheckingSeed.domainsText || "")
+      .split(/[\n,]+/)
+      .map((domain) => domain.trim())
+      .filter(Boolean).length;
+    const targetDomainCount = Number(targetItem.domainCount || 0);
+    const hasCurrentBatchDomains =
+      Number(bulkCheckingSeed.batchNumber || 0) === targetBatchNumber
+      && seededDomainCount > 0
+      && (!targetDomainCount || seededDomainCount === targetDomainCount);
+
+    if (hasCurrentBatchDomains) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const key = `bulkchecking-batch-${targetBatchNumber}`;
+
+    loadProcessedBatchDomains(targetItem)
+      .then((batchDomainResult) => {
+        if (cancelled) {
+          return;
+        }
+
+        const domains = Array.from(new Set(
+          (batchDomainResult.domains || [])
+            .map((domain) => String(domain || "").trim())
+            .filter(Boolean)
+        ));
+
+        if (!domains.length) {
+          setError(`No domains found in Batch ${formatBatchNumber(targetBatchNumber)} for bulk checking.`);
+          return;
+        }
+
+        setBulkCheckingSeed({
+          key: `${key}:${domains.length}:${Date.now()}`,
+          domainsText: domains.join("\n"),
+          batchNumber: targetBatchNumber,
+          subBatches: batchDomainResult.subBatches,
+        });
+        setProcessMessage(
+          `Batch ${formatBatchNumber(targetBatchNumber)} loaded into Bulk Checking with ${domains.length.toLocaleString()} domain${domains.length === 1 ? "" : "s"}.`
+        );
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err.response?.data?.message || err.message || "Failed to load batch domains into bulk checking");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeProcessBatch,
+    activeProcessStatus,
+    bulkCheckingSeed.batchNumber,
+    bulkCheckingSeed.domainsText,
+    canProcessExpiredDomains,
+    effectiveActiveTab,
+    loadProcessedBatchDomains,
+    loading,
+    visibleProcessBatchRows,
+  ]);
 
   const closeProcessedBatchViewer = () => {
     setProcessedBatchViewer({
@@ -2187,56 +2352,6 @@ export default function ExpiredDomainsPage() {
     handleOpenBatchInBulkChecking(copiedHandsonMainBatchBulkCheckingItem);
   };
 
-  const handleMoveBatchToFinalStage = async (item) => {
-    const key = `${item.status || "bulkchecking"}-batch-${item.batchNumber}`;
-    const stageSubBatches = item.subBatches || [];
-    const blockingNawalaBatchNumber = getBlockingNawalaBatchNumber(item.batchNumber);
-
-    if (!stageSubBatches.length) {
-      setError("No bulk checking sub-batches found in this batch.");
-      return;
-    }
-
-    if (blockingNawalaBatchNumber) {
-      setError(`Batch ${formatBatchNumber(blockingNawalaBatchNumber)} is already in Nawala Checking. Finish it before moving another batch to Nawala Checking.`);
-      return;
-    }
-
-    try {
-      setBusyId(`${key}:finalstage`);
-      setError("");
-      setProcessMessage("");
-
-      await Promise.all(
-        stageSubBatches.map((subBatch) =>
-          updateExpiredDomainProcessSubBatchStatus(subBatch.batchNumber, subBatch.subBatchNumber, "finalstage")
-        )
-      );
-
-      const movedSubBatchKeys = new Set(stageSubBatches.map((subBatch) => getSubBatchKey(subBatch)));
-
-      setSubBatches((current) =>
-        current.map((subBatch) =>
-          Number(subBatch.batchNumber || 1) === Number(item.batchNumber || 1)
-          && movedSubBatchKeys.has(getSubBatchKey(subBatch))
-            ? { ...subBatch, status: "finalstage" }
-            : subBatch
-        )
-      );
-      setProcessMessage(`Batch ${formatBatchNumber(item.batchNumber)} marked as ${PROCESS_STATUS_LABELS.finalstage}.`);
-      setNawalaCheckingResult(null);
-      setWaybackCheckingResult(null);
-      resetBulkCheckingView();
-      setActiveProcessStatus("finalstage");
-      setActiveProcessBatch(Number(item.batchNumber || 1));
-      await load();
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to finalize batch");
-    } finally {
-      setBusyId("");
-    }
-  };
-
   const handleMoveBulkResultsToNawalaChecking = useCallback(
     async ({ domains = [] } = {}) => {
       const batchNumber = bulkCheckingSeed.batchNumber || activeBulkCheckingBatchNumber || 0;
@@ -2279,12 +2394,33 @@ export default function ExpiredDomainsPage() {
       const failedDomainSet = new Set(
         (runState?.failed || []).map((item) => normalizeDomainForMatch(item?.domain)).filter(Boolean)
       );
+      const fallbackBulkCheckingBatch = bulkCheckingBatchRows.find((item) =>
+        Number(item.batchNumber || 1) === batchNumber
+      );
       const sourceSubBatches = Array.isArray(bulkCheckingSeed.subBatches) && bulkCheckingSeed.subBatches.length
         ? bulkCheckingSeed.subBatches
-        : subBatches.filter((item) =>
-          normalizeProcessStatus(item.status) === "bulkchecking"
-          && (!batchNumber || Number(item.batchNumber || 1) === batchNumber)
-        );
+        : fallbackBulkCheckingBatch?.subBatches?.length
+          ? (await loadProcessedBatchDomains(fallbackBulkCheckingBatch)).subBatches
+          : await Promise.all(
+            subBatches
+              .filter((item) =>
+                normalizeProcessStatus(item.status) === "bulkchecking"
+                && (!batchNumber || Number(item.batchNumber || 1) === batchNumber)
+              )
+              .map(async (subBatch) => {
+                const res = await getExpiredDomainProcessSubBatchDomains(
+                  subBatch.batchNumber,
+                  subBatch.subBatchNumber,
+                  "bulkchecking"
+                );
+                const payload = res.data?.data || {};
+
+                return {
+                  ...subBatch,
+                  domains: payload.domains || [],
+                };
+              })
+          );
       const updateRequests = [];
 
       sourceSubBatches.forEach((subBatch) => {
@@ -2314,22 +2450,11 @@ export default function ExpiredDomainsPage() {
         }
       });
 
-      if (!updateRequests.length && batchNumber) {
-        subBatches
-          .filter((item) =>
-            normalizeProcessStatus(item.status) === "bulkchecking"
-            && Number(item.batchNumber || 1) === batchNumber
-          )
-          .forEach((subBatch) => {
-            updateRequests.push(
-              updateExpiredDomainProcessSubBatchStatus(subBatch.batchNumber, subBatch.subBatchNumber, "finalstage")
-            );
-          });
+      if (!updateRequests.length) {
+        throw new Error("No Bulk Checker passed domains matched this batch for Nawala Checking.");
       }
 
-      if (updateRequests.length) {
-        await Promise.all(updateRequests);
-      }
+      await Promise.all(updateRequests);
 
       setNawalaCheckingResult({
         batchNumber,
@@ -2355,7 +2480,7 @@ export default function ExpiredDomainsPage() {
       );
       await load();
     },
-    [activeBulkCheckingBatchNumber, bulkCheckingSeed.batchNumber, bulkCheckingSeed.subBatches, getBlockingNawalaBatchNumber, load, resetBulkCheckingView, subBatches]
+    [activeBulkCheckingBatchNumber, bulkCheckingBatchRows, bulkCheckingSeed.batchNumber, bulkCheckingSeed.subBatches, getBlockingNawalaBatchNumber, load, loadProcessedBatchDomains, resetBulkCheckingView, subBatches]
   );
 
   const handleMoveNawalaToWayBack = useCallback(async (targetResult = null) => {
@@ -2428,6 +2553,18 @@ export default function ExpiredDomainsPage() {
 
       const movedDomains = Array.from(movedDomainSet);
       const movedAt = new Date().toISOString();
+      const movedDomainLookup = new Set(
+        movedDomains.map((domain) => normalizeDomainForMatch(domain)).filter(Boolean)
+      );
+      const movedNawalaResults = notBlockedRows.filter((item) =>
+        movedDomainLookup.has(normalizeDomainForMatch(item.domain))
+      );
+
+      await createWaybackBatchApi({
+        batchNumber,
+        domains: movedDomains,
+        nawalaResults: movedNawalaResults,
+      });
 
       setWaybackCheckingResult({
         batchNumber,
@@ -2803,7 +2940,6 @@ export default function ExpiredDomainsPage() {
     const copyBusy = busyId === `${key}:copy`;
     const mergeRequiredBeforeProcessing = isPendingProcessStatus(status)
       && (copiedHandson.key !== key || copiedHandson.loading || !copiedHandson.merged);
-    const finalStageBusy = busyId === `${key}:finalstage`;
 
     return (
       <div className="expired-domains-process-actions">
@@ -2830,14 +2966,7 @@ export default function ExpiredDomainsPage() {
           <span className="expired-domains-process-done">Merge Required</span>
         ) : null}
         {status === "bulkchecking" ? (
-          <button
-            type="button"
-            className="management-button-secondary"
-            disabled={Boolean(busyId)}
-            onClick={() => handleStatusUpdate(item, "finalstage")}
-          >
-            {finalStageBusy ? "Updating..." : "Finalize"}
-          </button>
+          <span className="expired-domains-process-done">Use Bulk Checker</span>
         ) : null}
         {status === "finalstage" ? (
           <span className="expired-domains-process-done">Nawala Checking</span>
@@ -2961,13 +3090,17 @@ export default function ExpiredDomainsPage() {
           {batchTransitionPrompt ? <div className="management-help-text">{batchTransitionPrompt}</div> : null}
           {loading ? <p className="management-empty">Loading expired-domain sub-batches...</p> : null}
 
-          {activeProcessStatus === "finalstage" ? (
+          {activeProcessStatus === "finalstage" && hasAvailableNawalaCheckingBatch ? (
             <NawalaCheckingResultsPanel
               result={visibleNawalaCheckingResult}
               onExport={() => exportNawalaResultCsv(visibleNawalaCheckingResult)}
               onMoveToWayBack={() => handleMoveNawalaToWayBack(visibleNawalaCheckingResult)}
               movingToWayBack={movingToWayBack}
             />
+          ) : null}
+
+          {!loading && activeProcessStatus === "finalstage" && !hasAvailableNawalaCheckingBatch ? (
+            <p className="management-empty">There is no available batch for Nawala Checking.</p>
           ) : null}
 
           {activeProcessStatus === "waybackchecking" && waybackCheckingResult ? (
@@ -2989,10 +3122,8 @@ export default function ExpiredDomainsPage() {
                   {visibleProcessBatchRows.map((item) => {
                     const batchKey = `${item.status || activeProcessStatus}-batch-${item.batchNumber}`;
                     const viewBusy = busyId === `${batchKey}:view`;
-                    const finalStageBusy = busyId === `${batchKey}:finalstage`;
                     const stagePercentage = Number(item.bulkCheckingPercentage || 0);
                     const stageStatusLabel = PROCESS_STATUS_LABELS[item.status || activeProcessStatus] || PROCESS_STATUS_LABELS[activeProcessStatus];
-                    const blockingNawalaBatchNumber = getBlockingNawalaBatchNumber(item.batchNumber);
 
                     return (
                       <tr key={item.id}>
@@ -3020,11 +3151,10 @@ export default function ExpiredDomainsPage() {
                             <button
                               type="button"
                               className="management-button-secondary"
-                              disabled={Boolean(busyId) || Boolean(blockingNawalaBatchNumber)}
-                              title={blockingNawalaBatchNumber ? `Batch ${formatBatchNumber(blockingNawalaBatchNumber)} is already in Nawala Checking.` : undefined}
-                              onClick={() => handleMoveBatchToFinalStage(item)}
+                              disabled
+                              title="Run Bulk Checker below, then use Move Passed to Nawala Checking."
                             >
-                              {finalStageBusy ? "Updating..." : "Finalize"}
+                              Use Passed Domains
                             </button>
                           </div>
                         </td>
